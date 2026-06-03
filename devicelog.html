@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Devices Live</title>
+
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/crypto-js@4.1.1/crypto-js.min.js"></script>
+
+<style>
+  body {font-family: 'Segoe UI', Arial, sans-serif; background-color: #FEFEFE; margin: 0; padding: 0; color: #222;}
+  .header small {display: block; color: #ccc;}
+  .sub-header {background: #fff; color: red; text-align: center; font-size: 13px; padding: 5px 0; border-bottom: 1px solid #ddd;}
+  .tabs {display: flex; flex-wrap: nowrap; overflow-x: auto; background: #111; border-bottom: 1px solid #333;}
+  .tab {color: #fff; flex: 1; text-align: center; padding: 8px 5px; font-size: 13px; white-space: nowrap; cursor: pointer;}
+  .tab.active {color: #00ff00; border-bottom: 2px solid #00ff00;}
+  .tab.logout {color: #ff4d4d;}
+  .search-box {background: #fff; padding: 8px; display: flex; gap: 6px; justify-content: space-between; align-items: center; border-bottom: 1px solid #ddd;}
+  .search-box input, .search-box select {flex: 1; padding: 8px; font-size: 13px; border: 1px solid #ccc; border-radius: 5px;}
+  .search-box select {max-width: 100px;}
+
+  .status-error {color: red;}
+  .status-success {color: green;}
+  .check-btn {background: #e8f5e9; color: #006600; border: 1px solid #009900; border-radius: 20px; padding: 6px 12px; font-size: 12px; cursor: pointer; white-space: nowrap;}
+  .footer {text-align: center; font-size: 12px; color: #666; padding: 12px;}
+
+.header {
+    display: flex;
+    justify-content: center;
+    align-items: center
+}
+
+.header h1 {
+    color: #03a84e;
+    font-size: 24px;
+    margin: 0;
+    padding: 6px
+}
+.bold,
+.header h1 {
+    font-weight: 700
+}
+
+
+.deviceContainer {
+    padding: 16px
+}
+
+.device-card,
+.deviceContainer {
+    box-shadow: 0 2px 4px rgba(0, 0, 0, .1);
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    color: #015;
+    margin: 5px
+}
+
+.device-card {
+    margin: 10px;
+    background: white;
+    padding: 10px;
+    font-size: 12px;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 10px
+}
+
+.device-card .deviceLink {
+    color: #03a84e;
+    text-decoration: none
+}
+
+.device-card-left {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px
+}
+
+.device-image {
+    width: auto;
+    height: 110px;
+    flex-shrink: 0
+}
+
+.device-details {
+    display: flex;
+    flex-direction: column
+}
+
+.device-title {
+    font-size: 14px;
+    font-weight: 700;
+    margin: 4px 0px;
+}
+
+.device-title .version {
+    background: #29d64c;
+    padding: 2px 8px;
+    color: white;
+    border-radius: 20px;
+    font-size: 12px;
+}
+
+.device-text {
+    margin: .1px 0
+}
+
+.device-warning {
+    color: red
+}
+
+.device-card-action {
+  display: flex;
+  flex-direction: column;
+  align-items: center;     /* <-- Center */
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.device-card .btn-outline {
+    width: 100%;
+    padding: 6px 12px;
+    border: 1px solid #03a84e;
+    background: transparent;
+    color: #03a84e;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all .2s ease
+}
+
+.device-card .btn-outline:hover:not(:disabled) {
+    background: #03a84e;
+    color: white
+}
+
+.device-card .btn-outline:disabled {
+    border-color: #aaa;
+    color: #aaa;
+    background: transparent;
+    cursor: not-allowed;
+    opacity: .6
+}
+
+.bdg {
+    background: #03a84e;
+    display: inline;
+    padding: 2px;
+    color: #fff;
+    font-size: 10px;
+    border-radius: 5px;
+    font-weight: 700
+}
+
+.device {
+    display: flex;
+    align-items: center
+}
+
+.deviceImg {
+    height: 110px;
+    width: auto
+}
+
+.small {
+    font-size: 11px
+}
+
+.deviceinfo {
+    margin-top: 0;
+    text-align: left
+}
+
+.devicetitle {
+    font-size: 16px;
+    margin-top: 0
+}
+
+.devicetitle,
+.dv {
+    font-weight: 600;
+    margin-bottom: 0
+}
+
+.dv {
+    font-size: 12px
+}
+
+.text-decoration-none {
+    text-decoration: none
+}
+
+.bold {
+    font-weight: 700
+}
+
+
+.device-card  .likeButton {
+  background: red;
+  color: white;
+}
+
+.live-label {
+    margin-left: 10px;
+    font-size: 0.8rem;
+    font-weight: bold;
+    color: red;
+}
+
+.live-dot {
+    font-weight: 700;
+    color: #ff0000;
+    width: 5px;
+    font-size: 14px;
+    height: 5px;
+    background-color: red;
+    border-radius: 50%;
+    position: relative
+}
+
+.live-dot:after {
+    content: "";
+    position: absolute;
+    top: -10px;
+    left: -10px;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: rgba(255, 0, 0, .5);
+    animation: pulse 1.5s ease-in-out infinite
+}
+
+@keyframes pulse {
+    0% {
+        transform: scale(.8);
+        opacity: 1
+    }
+
+    to {
+        transform: scale(1.8);
+        opacity: 0
+    }
+}
+
+p.online {
+    text-align: center;
+    color: #333;
+    padding: 4px;
+    margin: 0 0 5px
+}
+
+p.online strong {
+    color: #03a84e
+}
+
+.buttons button {
+    padding: 6px 12px;
+    font-size: 13px;
+    border: 1px solid #2b4c93;
+    background: white;
+    border-radius: 6px;
+    cursor: pointer;
+}
+
+.buttons button.active {
+    background: #001f60;
+    color: white;
+    border-color: #001f60;
+}
+
+.buttons button:hover {
+    background: #001f60;
+    color: white;
+}
+/* Loading Screen */
+#loading {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  background:rgba(0,0,0,0.55);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
+  z-index: 9999;
+}
+.spinner {
+  border: 6px solid #f3f3f3;
+  border-top: 6px solid green;
+  border-radius: 50%;
+  width: 50px;
+  height: 50px;
+  animation: spin 1s linear infinite;
+}
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+#loading p { margin-top: 15px; font-weight: bold; color: #333; }
+#loading p {
+  margin-top: 15px;
+  font-weight: bold;
+  color: white;
+  font-size: 18px;
+}
+
+.system-stats {
+    gap: 30px;
+}
+
+.stat-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 5px;
+}
+
+.stat-label {
+    font-weight: 700;
+    font-size: 1rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.stat-value {
+    font-size: 0.9rem;
+    color: var(--text-primary);
+    font-weight: 500;
+    background: var(--bg-tertiary);
+    padding: 5px 10px;
+    border-radius: 5px;
+    border: 1px solid var(--border-color);
+}
+
+</style>
+
+</head>
+
+<body>
+
+    <!-- Loading Screen -->
+<div id="loading" style="display: none;">
+    <div class="spinner"></div>
+    <p>
+        Loading: <span id="progressValue">0%</span>
+    </p>
+</div>
+
+<div class="header">
+    <h1>Login Sessions</h1> 
+    <span class="live-dot"></span>
+    <span class="live-label">SYSTEM ONLINE</span>
+</div>
+
+<div class="system-stats">
+    <div class="stat-item">
+        <span class="stat-label">DATA USAGE</span>
+        <span id="dataUsage" class="stat-value">SEND: --- | RECV: ---</span>
+    </div>
+</div>
+
+<p class="online"></span> <a href="devicelog.html">Logged Devices: <strong><span id="totalLoginDevices">0</span></a></strong></p>
+
+<div class="tabs">
+  <div class="tab" data-href="alldata.html">All Data</div>
+  <div class="tab" data-href="data.html">Messages</div>
+  <div class="tab" data-href="dashboard.html">Devices</div>
+  <div class="tab" data-href="setting.html">Setting</div>
+  <div class="tab logout">Logout</div>
+</div>
+
+<div id="deviceContainer"></div>
+
+<div class="footer">Device Monitor Panel — Mobile View</div>
+
+    <script src="config.js"></script>
+    <script src="main.js"></script>
+</body>
+</html>

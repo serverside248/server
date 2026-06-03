@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Devices Live</title>
+
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/crypto-js@4.1.1/crypto-js.min.js"></script>
+
+<style>
+  body {font-family: 'Segoe UI', Arial, sans-serif; background-color: #f4f4f4; margin: 0; padding: 0; color: #222;}
+  .header small {display: block; color: #ccc;}
+  .sub-header {background: #fff; color: red; text-align: center; font-size: 13px; padding: 5px 0; border-bottom: 1px solid #ddd;}
+  .tabs {display: flex; flex-wrap: nowrap; overflow-x: auto; background: #111; border-bottom: 1px solid #333;}
+  .tab {color: #fff; flex: 1; text-align: center; padding: 8px 5px; font-size: 13px; white-space: nowrap; cursor: pointer;}
+  .tab.active {color: #00ff00; border-bottom: 2px solid #00ff00;}
+  .tab.logout {color: #ff4d4d;}
+  .search-box {background: #fff; padding: 8px; display: flex; gap: 6px; justify-content: space-between; align-items: center; border-bottom: 1px solid #ddd;}
+  .search-box input, .search-box select {flex: 1; padding: 8px; font-size: 13px; border: 1px solid #ccc; border-radius: 5px;}
+  .search-box select {max-width: 100px;}
+
+  .footer {text-align: center; font-size: 12px; color: #666; padding: 12px;}
+
+
+    #deviceContainer {
+      padding: 10px;
+    }
+
+    .device-card {
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+      max-width: 420px;
+      width: 93%;
+      padding: 15px;
+    }
+
+    .device-header {
+      display: flex;
+      gap: 15px;
+      border-bottom: 1px solid #ddd;
+    }
+
+    .device-header h4 {
+      color: green;
+    }
+
+    .action-buttons1 {
+      text-align: center;
+      margin-top: 10px;
+    }
+
+    .action-buttons1 input {
+      width: 100%;
+      padding: 8px 10px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      font-size: 14px;
+      outline: none;
+      transition: 0.2s;
+      background: white;
+      font-weight: 700;
+    }
+
+    .action-buttons1 input {
+      margin-top: 10px;
+      width: 94%;
+    }
+
+    .action-buttons1 input:focus {
+      border-color: #2196f3;
+      background: #fff;
+      box-shadow: 0 0 4px rgba(33, 150, 243, 0.3);
+    }
+
+    .action-buttons1 button {
+      margin-top: 10px;
+      width: 30%;
+      padding: 8px 5px;
+      border: none;
+      border-radius: 6px;
+      background: #2196f3;
+      color: #fff;
+      font-size: 14px;
+      cursor: pointer;
+      transition: 0.2s;
+    }
+
+    .action-buttons1 .delete {
+      background: red;
+      color: #fff;
+    }
+
+    .action-buttons1 button:hover {
+      background: #1976d2;
+    }
+
+.header {
+    display: flex;
+    justify-content: center;
+    align-items: center
+}
+
+
+
+.header h1 {
+    color: #03a84e;
+    font-size: 24px;
+    margin: 0;
+    padding: 6px
+}
+.bold,
+.header h1 {
+    font-weight: 700
+}
+
+
+.live-label {
+    margin-left: 10px;
+    font-size: 0.8rem;
+    font-weight: bold;
+    color: red;
+}
+
+.live-dot {
+    font-weight: 700;
+    color: #ff0000;
+    width: 5px;
+    font-size: 14px;
+    height: 5px;
+    background-color: red;
+    border-radius: 50%;
+    position: relative
+}
+
+.live-dot:after {
+    content: "";
+    position: absolute;
+    top: -10px;
+    left: -10px;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: rgba(255, 0, 0, .5);
+    animation: pulse 1.5s ease-in-out infinite
+}
+
+@keyframes pulse {
+    0% {
+        transform: scale(.8);
+        opacity: 1
+    }
+
+    to {
+        transform: scale(1.8);
+        opacity: 0
+    }
+}
+
+p.online {
+    text-align: center;
+    color: #333;
+    padding: 4px;
+    margin: 0 0 5px
+}
+
+p.online strong {
+    color: #03a84e
+}
+
+/* Loading Screen */
+#loading {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  background:rgba(0,0,0,0.55);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
+  z-index: 9999;
+}
+.spinner {
+  border: 6px solid #f3f3f3;
+  border-top: 6px solid green;
+  border-radius: 50%;
+  width: 50px;
+  height: 50px;
+  animation: spin 1s linear infinite;
+}
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+#loading p { margin-top: 15px; font-weight: bold; color: #333; }
+#loading p {
+  margin-top: 15px;
+  font-weight: bold;
+  color: white;
+  font-size: 18px;
+}
+
+.system-stats {
+    gap: 30px;
+}
+
+.stat-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 5px;
+}
+
+.stat-label {
+    font-weight: 700;
+    font-size: 1rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.stat-value {
+    font-size: 0.9rem;
+    color: var(--text-primary);
+    font-weight: 500;
+    background: var(--bg-tertiary);
+    padding: 5px 10px;
+    border-radius: 5px;
+    border: 1px solid var(--border-color);
+}
+
+</style>
+
+</head>
+
+<body>
+
+    <!-- Loading Screen -->
+<div id="loading" style="display: none;">
+    <div class="spinner"></div>
+    <p>
+        Loading: <span id="progressValue">0%</span>
+    </p>
+</div>
+
+<div class="header">
+    <h1>Settings</h1> 
+    <span class="live-dot"></span>
+    <span class="live-label">SYSTEM ONLINE</span>
+</div>
+
+<div class="system-stats">
+    <div class="stat-item">
+        <span class="stat-label">DATA USAGE</span>
+        <span id="dataUsage" class="stat-value">SEND: --- | RECV: ---</span>
+    </div>
+</div>
+
+<p class="online">Total Users: <span><strong><span id="totalUsers">0</span></strong></span> <span>|</span> <a href="devicelog.html">Logged Devices: <strong><span id="totalLoginDevices">0</span></a></strong></p>
+
+<div class="tabs">
+  <div class="tab" data-href="alldata.html">All Data</div>
+  <div class="tab" data-href="data.html">Messages</div>
+  <div class="tab" data-href="dashboard.html">Devices</div>
+  <div class="tab active" data-href="setting.html">Setting</div>
+  <div class="tab logout">Logout</div>
+</div>
+
+<div id="deviceContainer">
+  
+
+
+  <div class="device-card" id="sendSMSCard">
+    <div class="device-header">
+      <h4 >Change Number</h4>
+    </div>
+
+    <div class="action-buttons1">
+      <input type="text" name="preNumber" placeholder="Old Phone Number" id="preNumber" maxlength="10" readonly>
+      <input type="text" name="number" placeholder="New Phone Number" id="number" maxlength="10">
+
+      <button type="button" id="changeNumberBtn">Update</button>
+    </div>
+
+
+  </div>
+
+
+
+  <div class="device-card"  style="margin-top: 20px;">
+    <div class="device-header">
+      <h4 >Change Password (Login Password)</h4>
+    </div>
+
+    <div class="action-buttons1">
+      <input type="text" name="oldPassword" placeholder="Current Password" id="oldPassword">
+
+      <input type="text" name="newPassword" placeholder="New Password" id="newPassword" >
+
+      <input type="text" name="confirmPassword" placeholder="Confirm Password" id="confirmPassword">
+
+      <button type="button" id="changePasswordBtn">Update</button>
+    </div>
+
+
+  </div>
+
+
+
+
+  <div class="device-card"  style="margin-top: 20px;">
+    <div class="device-header">
+      <h4 >Telegram Configration</h4>
+    </div>
+
+    <div class="action-buttons1">
+
+      <input type="text" name="chatId" placeholder="Chat ID" id="chatId">
+
+      <input type="text" name="token" placeholder="Token" id="token">
+
+      <button type="button" id="telegramConfig">Update</button>
+    </div>
+
+
+  </div>
+
+  <div class="device-card"  style="margin-top: 20px;">
+    <div class="device-header">
+      <h4 >Clear Data</h4>
+    </div>
+
+    <div class="action-buttons1">
+
+      <input type="text" name="confirmPassword" placeholder="Enter Password" id="deletePassword">
+
+      <button class="delete" type="button" id="clearUserBtn">Clear User</button>
+      <button class="delete" type="button" id="clearMessagesBtn">Clear Messages</button>
+    </div>
+
+
+  </div>
+
+
+
+  <div class="device-card"  style="margin-top: 20px;">
+    <div class="device-header">
+      <h4 >Change Password (Deletion Password)</h4>
+    </div>
+
+    <div class="action-buttons1">
+      <input type="text" name="deletionOldPassword" placeholder="Current Password" id="deletionOldPassword">
+
+      <input type="text" name="deletionNewPassword" placeholder="New Password" id="deletionNewPassword" >
+
+      <input type="text" name="deletionConfirmPassword" placeholder="Confirm Password" id="deletionConfirmPassword">
+
+      <button type="button" id="deletionPasswordChangeBtn">Update</button>
+    </div>
+
+
+  </div>
+
+
+</div>
+
+<div class="footer">Device Monitor Panel — Mobile View</div>
+
+
+<script src="config.js"></script>
+<script src="main.js"></script>
+
+</body>
+</html>

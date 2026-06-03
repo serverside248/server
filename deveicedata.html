@@ -1,0 +1,505 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Device Dashboard</title>
+
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/crypto-js@4.1.1/crypto-js.min.js"></script>
+
+  <style>
+    body {
+      background: #f2f2f2;
+      font-family: "Segoe UI", sans-serif;
+      margin: 0;
+      padding: 10px;
+    }
+
+
+    .device-card {
+      margin-top: 10px;
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+      max-width: 420px;
+      width: 93%;
+      padding: 15px;
+    }
+
+    .device-header {
+      display: flex;
+      gap: 15px;
+      border-bottom: 1px solid #ddd;
+      padding-bottom: 10px;
+    }
+
+    .device-img {
+      width: 70px;
+      height: 120px;
+      object-fit: contain;
+    }
+
+    .device-details h2 {
+      font-size: 18px;
+      margin: 0 0 5px;
+    }
+
+    .device-details {
+    gap: 5px;
+    }
+
+    .status-dot {
+      display: inline-block;
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      margin-left: 6px;
+    }
+
+    .status-dot.online { background: #4caf50; }
+    .status-dot.offline { background: #f44336; }
+
+    .off { color: red; }
+    .last-online { color: #777; font-size: 13px; }
+
+    .action-buttons {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+      margin: 15px 0;
+    }
+
+    .action-buttons button {
+      padding: 8px 5px;
+      border: none;
+      border-radius: 6px;
+      background: #2196f3;
+      color: #fff;
+      font-size: 14px;
+      cursor: pointer;
+      transition: 0.2s;
+    }
+
+    .action-buttons button:hover {
+      background: #1976d2;
+    }
+
+
+
+    .log-section {
+      padding-top: 10px;
+      font-size: 13px;
+    }
+
+    .log {
+      margin: 4px 0;
+    }
+
+    .log.success {
+      color: green;
+      font-weight: 500;
+    }
+
+    .time {
+      color: #555;
+      font-weight: 500;
+    }
+
+    .device-card1 {
+      margin-top: 10px;
+      width: 93%;
+      background: #fff; 
+      padding: 12px;
+      border-radius: 8px; 
+      box-shadow: 0 1px 3px rgba(0,0,0,0.15);
+      display: flex; 
+      align-items: center;
+    }
+    .device-icon1 { font-size: 40px; color: #4CAF50; margin-right: 12px; }
+    .device-info1 { flex: 1; font-size: 13px; line-height: 1.4; }
+    .device-info1 strong { color: #007700; }
+
+    .device-card2 select,
+    .device-card2 input {
+      width: 100%;
+      padding: 8px 10px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      font-size: 14px;
+      outline: none;
+      transition: 0.2s;
+      background: #fafafa;
+    }
+
+    .device-card2 select:focus,
+    .device-card2 input:focus {
+      border-color: #2196f3;
+      background: #fff;
+      box-shadow: 0 0 4px rgba(33, 150, 243, 0.3);
+    }
+
+    .action-buttons1 {
+      text-align: center;
+      margin-top: 10px;
+    }
+
+    .action-buttons1 select,
+    .action-buttons1 input,
+    .action-buttons1 textarea {
+      width: 100%;
+      padding: 8px 10px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      font-size: 14px;
+      outline: none;
+      transition: 0.2s;
+      background: #fafafa;
+    }
+
+    .action-buttons1 input, .action-buttons1 textarea {
+      margin: 10px 0px 10px 0px;
+      width: 94%;
+    }
+
+     .action-buttons1 textarea {
+      height: 100px;
+     }
+
+
+    .action-buttons1 select:focus,
+    .action-buttons1 input:focus {
+      border-color: #2196f3;
+      background: #fff;
+      box-shadow: 0 0 4px rgba(33, 150, 243, 0.3);
+    }
+
+    .action-buttons1 button {
+      width: 30%;
+      padding: 8px 5px;
+      border: none;
+      border-radius: 6px;
+      background: #02A84F;
+      color: #fff;
+      font-size: 14px;
+      cursor: pointer;
+      transition: 0.2s;
+    }
+
+    .action-buttons1 button:hover {
+      background: #1976d2;
+    }
+
+    .action-buttons1 .enable {
+      background: green;
+    }
+
+    .action-buttons1 .disable {
+      background: red;
+    }
+
+
+.card {
+    width: 91%;
+    background: #fff;
+    border-radius: 10px;
+    padding: 15px;
+    border: 1px solid #c7c7c7;
+    font-family: Arial;
+    box-shadow: 0px 2px 8px rgba(0,0,0,0.15);
+}
+
+.top-section {
+    display: flex;
+    gap: 15px;
+}
+
+.phone-img {
+    width: 80px;
+    height: 100%;
+}
+
+.details h2 {
+    margin: 0;
+    font-size: 18px;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.green-badge {
+    background: #29d64c;
+    padding: 2px 8px;
+    color: white;
+    border-radius: 20px;
+    font-size: 12px;
+}
+
+.last-online span {
+    color: red;
+    font-weight: bold;
+}
+
+.buttons {
+    margin-top: 18px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    justify-content: center;
+}
+
+.buttons button {
+    padding: 6px 12px;
+    font-size: 13px;
+    border: 1px solid #2b4c93;
+    background: white;
+    border-radius: 6px;
+    cursor: pointer;
+}
+
+.buttons button.active {
+    background: #001f60;
+    color: white;
+    border-color: #001f60;
+}
+
+.buttons button:hover {
+    background: #001f60;
+    color: white;
+}
+
+.logs {
+    margin-top: 20px;
+    border-top: 2px solid #e5e5e5;
+    padding-top: 10px;
+    font-size: 13px;
+}
+
+.logs .online {
+    color: #04b60a;
+    font-weight: bold;
+}
+
+
+  .msg-card {
+    font-size: 14px;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    white-space: normal;
+    border: 2px solid #000;
+    border-radius: 8px;
+    padding: 9px;
+    margin: 5px;
+    background-color: #fff;
+    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, .1), 0 1px 2px 0 rgba(0, 0, 0, .06);
+    transition: box-shadow .2s ease;
+  }
+
+  .msg-card .info {
+    padding: 4px
+  }
+
+  .msg-card .main-info {
+      padding: 4px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px
+  }
+
+  .msg-card .info:last-child {
+    border-bottom: none
+  }
+
+
+  .msg-card .key {
+      margin-right: 5px
+  }
+  .msg-card.card strong,
+  .msg-card .key {
+    color: #015;
+    font-weight: 700
+}
+
+
+.msg-card .msg-red {
+    color: red
+}
+
+  .msg-card.info.other a,
+  .msg-card.main-info a {
+    color: rgb(0, 14, 68)
+}
+
+  .msg-card.date {
+    font-size: 12px;
+    color: #333
+}
+
+  .msg-card.main-info {
+    padding: 4px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px
+}
+
+.device-data-header {
+  padding: 10px;
+
+  background: #001f60;
+
+  color: white;
+
+  border-radius: 10px;
+  text-align: center;
+}
+
+/* Loading Screen */
+#loading {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  background:rgba(0,0,0,0.55);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
+  z-index: 9999;
+}
+.spinner {
+  border: 6px solid #f3f3f3;
+  border-top: 6px solid green;
+  border-radius: 50%;
+  width: 50px;
+  height: 50px;
+  animation: spin 1s linear infinite;
+}
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+#loading p { margin-top: 15px; font-weight: bold; color: #333; }
+#loading p {
+  margin-top: 15px;
+  font-weight: bold;
+  color: white;
+  font-size: 18px;
+}
+
+  </style>
+
+</head>
+<body>
+
+    <!-- Loading Screen -->
+<div id="loading" style="display: none;">
+    <div class="spinner"></div>
+    <p>
+        Loading: <span id="progressValue">0%</span>
+    </p>
+</div>
+
+  <div class="card">
+      <div class="top-section">
+          <img src="device.png" class="phone-img">
+
+          <div class="details">
+              <h2><span id="devicename"></span> <span class="green-badge"><span id="deviceversion"></span></span></h2>
+
+              <p><b>Device:</b> <span id="deviceId"></span></p>
+              <p><span id="operator"></span></p>
+              <p><b>Call Forwarding:</b> <span style="color:red" id="callforwarding" class="off">OFF</span></p>
+          </div>
+      </div>
+
+      <div class="buttons">
+        <button onclick="window.location.href = 'dashboard.html'">Home</button>
+        <button id="viewDataBtn">View Data</button>
+        <button id="fetchSMSBtn">Get SMS</button>
+        <button id="sendMessageBtn">Send SMS</button>
+        <button id="callForwardingBtn">Call Forwarding</button>
+        <button id="ussdDialogBtn">USSD Dialing</button>
+      </div>
+
+
+    <div id="viewDataCard" style="display: none;" >
+      <hr>
+      <div class="device-data-header">
+        <strong>View Data</strong>
+      </div>
+
+      <div class="log-section" id="listdata">
+      </div>
+
+    </div>
+
+    <div id="viewSMSCard" style="display: none;" >
+      <hr>
+      <div class="device-data-header">
+        <strong>Device SMS</strong>
+      </div>
+
+      <div id="list"></div>
+
+    </div>
+
+    <div style="display: none;" id="callForwardingCard">
+      <hr>
+      <div class="device-data-header">
+        <strong>Call Forwarding</strong>
+      </div>
+
+      <div class="action-buttons1">
+        <select id="selectOperator">
+        </select>
+        <input type="text" name="phone-number" id="phone-number" maxlength="15">
+        <button class="enable" id="enableCallForwardingBtn">Enable</button>
+        <button class="disable" id="disableCallForwardingBtn">Disable</button>
+      </div>
+
+    </div>
+
+    <div style="display: none;" id="ussdDialingCard">
+      <hr>
+      <div class="device-data-header">
+        <strong>USSD Dialing</strong>
+      </div>
+
+      <div class="action-buttons1">
+        <select id="selectOperator2">
+        </select>
+        <input type="text" name="phone-number2" id="phone-number2">
+        <button id="sendUSSDBtn">Send</button>
+      </div>
+
+
+    </div>
+
+    <div style="display: none;" id="sendSMSCard">
+      <hr>
+      <div class="device-data-header">
+        <strong>Send SMS</strong>
+      </div>
+
+      <div class="action-buttons1">
+        <select id="selectOperator1">
+        </select>
+        <input type="text" name="phone-number1" placeholder="Phone Number" id="phone-number1" maxlength="15">
+        <textarea type="text" placeholder="Message" name="message" id="message"></textarea>
+        <button id="sendSMSButton">Send SMS</button>
+      </div>
+
+
+    </div>
+
+  </div>
+
+  <script src="config.js"></script>
+  <script src="main.js"></script>
+
+</body>
+</html>
+
